@@ -76,7 +76,7 @@ def lambda_handler(event, context):
                     filename = key.split("/")[-1]
                     name, ext = os.path.splitext(filename)
 
-                    s3.copy_object(Bucket=bucket, Key=f"processed/valid/{name}",
+                    s3.copy_object(Bucket=bucket, Key=f"processed/valid/{name+ext}",
                     CopySource={'Bucket': bucket, 'Key': key})
 
     # todo: if invalid:
@@ -85,6 +85,6 @@ def lambda_handler(event, context):
 
             if not valid:
                     print(f"[INVALID] {key} is not a valid image type")
-                    raise(ValueError)
+                    raise ValueError()
 
     return {'statusCode': 200, 'body': 'validation complete'}
