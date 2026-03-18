@@ -42,12 +42,27 @@ def lambda_handler(event, context):
     print("=== image validator invoked ===")
 
     # todo: loop through event['Records']
+    for record in event['Records']:
+
     # todo: for each record, get the SNS message string from record['Sns']['Message']
+        sns_message = record['Sns']['Message']
+
     # todo: parse the SNS message string as JSON to get the S3 event
+        raw = sns_message
+        parsed = json.loads(raw)
+
     # todo: loop through the S3 event's 'Records'
+        for s3_record in parsed['Records']:
+
     # todo: extract bucket name from s3_record['s3']['bucket']['name']
+            bucket = s3_record['s3']['bucket']['name']
+
     # todo: extract object key from s3_record['s3']['object']['key']
+            key = s3_record['s3']['object']['key']
+
     # todo: use is_valid_image() to check the file extension
+            valid = is_valid_image(key)
+
     # todo: if valid:
     #         - print the [VALID] message: print(f"[VALID] {key} is a valid image file")
     #         - get the filename from the key (e.g. "uploads/test.jpg" -> "test.jpg")
@@ -55,8 +70,21 @@ def lambda_handler(event, context):
     #         - copy the object to processed/valid/{filename}
     #           hint: s3.copy_object(Bucket=bucket, Key=f"processed/valid/{filename}",
     #                 CopySource={'Bucket': bucket, 'Key': key})
+            if valid:
+                    print(f"[VALID] {key} is a valid image file")
+
+                    filename = key.split("/")[-1]
+                    name, ext = os.path.splitext(filename)
+
+                    s3.copy_object(Bucket=bucket, Key=f"processed/valid/{name}",
+                    CopySource={'Bucket': bucket, 'Key': key})
+
     # todo: if invalid:
     #         - print the [INVALID] message: print(f"[INVALID] {key} is not a valid image type")
     #         - raise ValueError to trigger DLQ
+
+            if not valid:
+                    print(f"[INVALID] {key} is not a valid image type")
+                    raise(ValueError)
 
     return {'statusCode': 200, 'body': 'validation complete'}
